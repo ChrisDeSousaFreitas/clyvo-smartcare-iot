@@ -11,7 +11,7 @@
 
 ## 📹 Apresentação e Pitch
 Confira o vídeo de demonstração do funcionamento da arquitetura e simulação do hardware na nuvem:
-▶️ **[Insira o link do seu vídeo do YouTube aqui]**
+▶️ **[https://youtu.be/RGIobytVwZM]**
 
 ## 📌 O Problema
 A monitorização da saúde de animais de estimação baseia-se na observação humana, o que leva frequentemente a diagnósticos tardios de stress, dores ou problemas cardíacos. O projeto visa resolver a lacuna de comunicação entre o bem-estar do pet e a percepção do tutor.
