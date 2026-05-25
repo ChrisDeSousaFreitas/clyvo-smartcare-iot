@@ -1,0 +1,88 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+// Configurações WiFi da rede simulada do Wokwi
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+
+// Configurações MQTT (Broker Público e Gratuito)
+const char* mqtt_server = "broker.hivemq.com";
+const char* topico_bpm = "clyvocare/pet1/bpm";
+const char* topico_status = "clyvocare/pet1/status";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+const int pinoBPM = 34; // Pino do Potenciômetro
+const int ledPino = 2;  // LED de atividade
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPino, OUTPUT);
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+}
+
+void setup_wifi() {
+  delay(10);
+  Serial.println("Conectando a rede WiFi...");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi conectado com sucesso!");
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Tentando conexao MQTT...");
+    String clientId = "ClyvoCollar-";
+    clientId += String(random(0xffff), HEX);
+    
+    if (client.connect(clientId.c_str())) {
+      Serial.println("Conectado ao Broker!");
+    } else {
+      Serial.print("Falhou, rc=");
+      Serial.print(client.state());
+      Serial.println(" tentando novamente em 5 segundos");
+      delay(5000);
+    }
+  }
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  // Simula a leitura dos sensores
+  int leituraAnalogica = analogRead(pinoBPM);
+  
+  // Mapeia a leitura (0-4095) para um valor realista de BPM de um cão/gato (60 a 180)
+  int bpm = map(leituraAnalogica, 0, 4095, 60, 180);
+
+  // Define o status lógico com base no coração
+  String status;
+  if (bpm < 80) status = "Descansando";
+  else if (bpm < 130) status = "Atividade Normal";
+  else status = "Alerta: Agitacao/Stress";
+
+  // Acende o LED para mostrar transmissão
+  digitalWrite(ledPino, HIGH);
+  
+  // Publica os dados via MQTT
+  client.publish(topico_bpm, String(bpm).c_str());
+  client.publish(topico_status, status.c_str());
+  
+  Serial.print("Dados enviados -> BPM: ");
+  Serial.print(bpm);
+  Serial.print(" | Estado: ");
+  Serial.println(status);
+
+  delay(200);
+  digitalWrite(ledPino, LOW);
+  
+  delay(3000); // Aguarda 3 segundos ate a proxima leitura
+}
